@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#define deg90 128
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +65,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_SPI2_Init(void);
+void initStep(int steps);
+void step(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -109,7 +111,7 @@ int main(void)
   MX_I2C2_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-  initSteps(deg90/10);
+  initStep(deg90/10);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -117,12 +119,66 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+    if (milliseconds >= 1000) {
+      tm.seconds++;
+      milliseconds = 0;
+    }
+    if (tm.seconds >= 1) {
+      initStep(deg90/10 + 1);
+      tm.seconds = 0;
+    }
+    step();
+    HAL_Delay(1);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
-
+void initStep(int steps) {
+  StepCount = steps;
+  flag = 1;
+}
+void step(void) {
+  if (flag == 1) {
+    switch(run) 
+    {
+    case ONE:
+      HAL_GPIO_WritePin(GPIOB, IN1_7_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, IN2_7_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, IN3_7_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, IN4_7_Pin, GPIO_PIN_RESET);
+      run = TWO;  
+      break;
+    
+    case TWO:
+      HAL_GPIO_WritePin(GPIOB, IN1_7_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, IN2_7_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, IN3_7_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, IN4_7_Pin, GPIO_PIN_RESET);
+      run = THREE;
+      break;
+    
+    case THREE:
+      HAL_GPIO_WritePin(GPIOB, IN1_7_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, IN2_7_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, IN3_7_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, IN4_7_Pin, GPIO_PIN_SET);
+      run = FOUR;
+      break;
+    
+    case FOUR:
+      HAL_GPIO_WritePin(GPIOB, IN1_7_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, IN2_7_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, IN3_7_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, IN4_7_Pin, GPIO_PIN_SET);
+      run = ONE;
+      StepCount--;
+      if(StepCount <= 0) {
+        flag = 0;
+      }
+      break;
+    }
+  }
+}
 /**
   * @brief System Clock Configuration
   * @retval None
