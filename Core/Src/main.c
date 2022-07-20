@@ -23,10 +23,16 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #define deg90 128
+#define Minute_Ones 0
+#define Minute_Tens 1
+#define Hour_Ones 2
+#define Hour_Tens 3
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+enum step{ONE, TWO, THREE, FOUR};
+
 typedef struct
 {
   int seconds;
@@ -34,11 +40,21 @@ typedef struct
   int hours;
   
 } time;
+typedef struct {
+  GPIO_TypeDef* GPIOx;
+  uint16_t GPIO_Pin_1;
+  uint16_t GPIO_Pin_2;
+  uint16_t GPIO_Pin_3;
+  uint16_t GPIO_Pin_4;
+  int move_flag;
+  int steps_to_move;
+  enum step curr_step;
+} Motor_TypeDef;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-enum step{ONE, TWO, THREE, FOUR};
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,15 +63,13 @@ enum step{ONE, TWO, THREE, FOUR};
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c2;
-
 SPI_HandleTypeDef hspi2;
 
 /* USER CODE BEGIN PV */
-enum step run = ONE;
 int flag = 0;
 int StepCount;
 time tm;
+Motor_TypeDef Motors[4];
 int milliseconds;
 int stepFlag = 0;
 GPIO_PinState lastPosition1;
@@ -64,66 +78,67 @@ GPIO_PinState lastPosition1;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_I2C2_Init(void);
 static void MX_SPI2_Init(void);
-void initStep(int steps);
-void step(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void initStep(int steps) {
-  StepCount = steps;
-  flag = 1;
+void initStep(int steps, int id) {
+  Motors[id].steps_to_move = steps;
+  Motors[id].move_flag = 1;
 }
 
 void step(void) {
-  if (flag == 1) {
-    switch(run) 
+  for (int i = 0; i < 4; i++) {
+    if (Motors[i].move_flag == 1) {
+       switch(Motors[i].curr_step) 
     {
-    case ONE:
-      HAL_GPIO_WritePin(GPIOB, IN1_7_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, IN2_7_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, IN3_7_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, IN4_7_Pin, GPIO_PIN_RESET);
-      run = TWO;  
-      break;
-    
-    case TWO:
-      HAL_GPIO_WritePin(GPIOB, IN1_7_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, IN2_7_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, IN3_7_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, IN4_7_Pin, GPIO_PIN_RESET);
-      run = THREE;
-      break;
-    
-    case THREE:
-      HAL_GPIO_WritePin(GPIOB, IN1_7_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, IN2_7_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, IN3_7_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, IN4_7_Pin, GPIO_PIN_SET);
-      run = FOUR;
-      break;
-    
-    case FOUR:
-      HAL_GPIO_WritePin(GPIOB, IN1_7_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, IN2_7_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, IN3_7_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, IN4_7_Pin, GPIO_PIN_SET);
-      run = ONE;
-      StepCount--;
-      if(StepCount <= 0) {
-        flag = 0;
+      case ONE:
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_1, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_2, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_3, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_4, GPIO_PIN_RESET);
+        Motors[i].curr_step = TWO;  
+        break;
+      
+      case TWO:
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_1, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_2, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_3, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_4, GPIO_PIN_RESET);
+        Motors[i].curr_step = THREE;
+        break;
+      
+      case THREE:
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_1, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_2, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_3, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_4, GPIO_PIN_SET);
+        Motors[i].curr_step = FOUR;
+        break;
+      
+      case FOUR:
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_1, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_2, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_3, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_4, GPIO_PIN_SET);
+        Motors[i].curr_step = ONE;
+        Motors[i].steps_to_move--;
+        if(Motors[i].steps_to_move <= 0) {
+          Motors[i].move_flag = 0;
+        }
+        break;
       }
-      break;
+    
     }
   }
 }
 
 
 /* USER CODE END 0 */
+
 /**
   * @brief  The application entry point.
   * @retval int
@@ -135,6 +150,41 @@ int main(void)
   tm.seconds = 0;
   tm.minutes = 0;
   tm.hours = 0;
+  Motors[Minute_Ones].GPIOx = GPIOB;
+  Motors[Minute_Ones].GPIO_Pin_1 = IN1_1_Pin;
+  Motors[Minute_Ones].GPIO_Pin_2 = IN2_1_Pin;
+  Motors[Minute_Ones].GPIO_Pin_3 = IN3_1_Pin;
+  Motors[Minute_Ones].GPIO_Pin_4 = IN4_1_Pin;
+  Motors[Minute_Ones].move_flag = 0;
+  Motors[Minute_Ones].steps_to_move = 0;
+  Motors[Minute_Ones].curr_step = ONE;
+  
+  Motors[Minute_Tens].GPIOx = GPIOB;
+  Motors[Minute_Tens].GPIO_Pin_1 = IN1_2_Pin;
+  Motors[Minute_Tens].GPIO_Pin_2 = IN2_2_Pin;
+  Motors[Minute_Tens].GPIO_Pin_3 = IN3_2_Pin;
+  Motors[Minute_Tens].GPIO_Pin_4 = IN4_2_Pin;
+  Motors[Minute_Tens].move_flag = 0;
+  Motors[Minute_Tens].steps_to_move = 0;
+  Motors[Minute_Tens].curr_step = ONE;
+  
+  Motors[Hour_Ones].GPIOx = GPIOA;
+  Motors[Hour_Ones].GPIO_Pin_1 = IN1_3_Pin;
+  Motors[Hour_Ones].GPIO_Pin_2 = IN2_3_Pin;
+  Motors[Hour_Ones].GPIO_Pin_3 = IN3_3_Pin;
+  Motors[Hour_Ones].GPIO_Pin_4 = IN4_3_Pin;
+  Motors[Hour_Ones].move_flag = 0;
+  Motors[Hour_Ones].steps_to_move = 0;
+  Motors[Hour_Ones].curr_step = ONE;
+  
+  Motors[Hour_Tens].GPIOx = GPIOA;
+  Motors[Hour_Tens].GPIO_Pin_1 = IN1_4_Pin;
+  Motors[Hour_Tens].GPIO_Pin_2 = IN2_4_Pin;
+  Motors[Hour_Tens].GPIO_Pin_3 = IN3_4_Pin;
+  Motors[Hour_Tens].GPIO_Pin_4 = IN4_4_Pin;
+  Motors[Hour_Tens].move_flag = 0;    
+  Motors[Hour_Tens].steps_to_move = 0;
+  Motors[Hour_Tens].curr_step = ONE;
   
   
   /* USER CODE END 1 */
@@ -157,10 +207,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_I2C2_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-  initStep(deg90/10);
+  initStep(deg90/10 + 1, 0);
+  initStep(deg90/10 + 1, 1);
+  initStep(deg90/10 + 1, 2);
+  initStep(deg90/10 + 1, 3);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -175,18 +227,21 @@ int main(void)
       tm.seconds++;
       milliseconds = 0;
     }
-    if (tm.seconds >= 1) {
+    if (tm.seconds >= 5) {
       if (flag != 1) {
-        initStep(deg90/10 + 1);
+        initStep(deg90/10 + 1, 0);
+        initStep(deg90/10 + 1, 1);
+        initStep(deg90/10 + 1, 2);
+        initStep(deg90/10 + 1, 3);
       }
       tm.seconds = 0;
     }
     step();
     HAL_Delay(1);
-    if(lastPosition1 != HAL_GPIO_ReadPin(GPIOC, MAG1_Pin)) {
-      initStep(deg90*3);
-      lastPosition1 = HAL_GPIO_ReadPin(GPIOC, MAG1_Pin);
-    }
+//    if(lastPosition1 != HAL_GPIO_ReadPin(GPIOC, MAG1_Pin)) {
+//      initStep(deg90*3);
+//      lastPosition1 = HAL_GPIO_ReadPin(GPIOC, MAG1_Pin);
+//    }
   }
   /* USER CODE END 3 */
 }
@@ -226,52 +281,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief I2C2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C2_Init(void)
-{
-
-  /* USER CODE BEGIN I2C2_Init 0 */
-
-  /* USER CODE END I2C2_Init 0 */
-
-  /* USER CODE BEGIN I2C2_Init 1 */
-
-  /* USER CODE END I2C2_Init 1 */
-  hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x20303E5D;
-  hi2c2.Init.OwnAddress1 = 0;
-  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c2.Init.OwnAddress2 = 0;
-  hi2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure Analogue filter
-  */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure Digital filter
-  */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C2_Init 2 */
-
-  /* USER CODE END I2C2_Init 2 */
-
 }
 
 /**
@@ -329,26 +338,21 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, IN2_5_Pin|IN3_5_Pin|IN4_5_Pin|NCS_MEMS_SPI_Pin
-                          |EXT_RESET_Pin|LD3_Pin|LD6_Pin|LD4_Pin
-                          |LD5_Pin|IN1_5_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, NCS_MEMS_SPI_Pin|LD3_Pin|LD6_Pin|LD4_Pin
+                          |LD5_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, IN1_1_Pin|IN2_1_Pin|IN3_1_Pin|IN4_1_Pin
-                          |IN1_2_Pin|IN2_2_Pin|IN3_2_Pin|IN4_2_Pin
-                          |IN1_3_Pin|IN2_3_Pin|IN3_3_Pin|IN4_3_Pin
+  HAL_GPIO_WritePin(GPIOA, IN1_3_Pin|IN2_3_Pin|IN3_3_Pin|IN4_3_Pin
                           |IN1_4_Pin|IN2_4_Pin|IN3_4_Pin|IN4_4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, IN1_6_Pin|IN2_6_Pin|IN3_6_Pin|IN4_6_Pin
-                          |IN1_7_Pin|IN2_7_Pin|IN3_7_Pin|IN4_7_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, IN1_1_Pin|IN2_1_Pin|IN3_1_Pin|IN4_1_Pin
+                          |IN1_2_Pin|IN2_2_Pin|IN3_2_Pin|IN4_2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : IN2_5_Pin IN3_5_Pin IN4_5_Pin NCS_MEMS_SPI_Pin
-                           EXT_RESET_Pin LD3_Pin LD6_Pin LD4_Pin
-                           LD5_Pin IN1_5_Pin */
-  GPIO_InitStruct.Pin = IN2_5_Pin|IN3_5_Pin|IN4_5_Pin|NCS_MEMS_SPI_Pin
-                          |EXT_RESET_Pin|LD3_Pin|LD6_Pin|LD4_Pin
-                          |LD5_Pin|IN1_5_Pin;
+  /*Configure GPIO pins : NCS_MEMS_SPI_Pin LD3_Pin LD6_Pin LD4_Pin
+                           LD5_Pin */
+  GPIO_InitStruct.Pin = NCS_MEMS_SPI_Pin|LD3_Pin|LD6_Pin|LD4_Pin
+                          |LD5_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -360,13 +364,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : IN1_1_Pin IN2_1_Pin IN3_1_Pin IN4_1_Pin
-                           IN1_2_Pin IN2_2_Pin IN3_2_Pin IN4_2_Pin
-                           IN1_3_Pin IN2_3_Pin IN3_3_Pin IN4_3_Pin
+  /*Configure GPIO pins : IN1_3_Pin IN2_3_Pin IN3_3_Pin IN4_3_Pin
                            IN1_4_Pin IN2_4_Pin IN3_4_Pin IN4_4_Pin */
-  GPIO_InitStruct.Pin = IN1_1_Pin|IN2_1_Pin|IN3_1_Pin|IN4_1_Pin
-                          |IN1_2_Pin|IN2_2_Pin|IN3_2_Pin|IN4_2_Pin
-                          |IN1_3_Pin|IN2_3_Pin|IN3_3_Pin|IN4_3_Pin
+  GPIO_InitStruct.Pin = IN1_3_Pin|IN2_3_Pin|IN3_3_Pin|IN4_3_Pin
                           |IN1_4_Pin|IN2_4_Pin|IN3_4_Pin|IN4_4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -379,10 +379,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(MAG1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : IN1_6_Pin IN2_6_Pin IN3_6_Pin IN4_6_Pin
-                           IN1_7_Pin IN2_7_Pin IN3_7_Pin IN4_7_Pin */
-  GPIO_InitStruct.Pin = IN1_6_Pin|IN2_6_Pin|IN3_6_Pin|IN4_6_Pin
-                          |IN1_7_Pin|IN2_7_Pin|IN3_7_Pin|IN4_7_Pin;
+  /*Configure GPIO pins : IN1_1_Pin IN2_1_Pin IN3_1_Pin IN4_1_Pin
+                           IN1_2_Pin IN2_2_Pin IN3_2_Pin IN4_2_Pin */
+  GPIO_InitStruct.Pin = IN1_1_Pin|IN2_1_Pin|IN3_1_Pin|IN4_1_Pin
+                          |IN1_2_Pin|IN2_2_Pin|IN3_2_Pin|IN4_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
