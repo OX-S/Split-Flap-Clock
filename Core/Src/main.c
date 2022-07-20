@@ -227,14 +227,21 @@ int main(void)
       tm.seconds++;
       milliseconds = 0;
     }
-    if (tm.seconds >= 5) {
-      if (flag != 1) {
-        initStep(deg90/10 + 1, 0);
-        initStep(deg90/10 + 1, 1);
-        initStep(deg90/10 + 1, 2);
-        initStep(deg90/10 + 1, 3);
-      }
+    if (tm.seconds >= 60) {
+//      if (flag != 1) {
+//        initStep(deg90/10 + 1, 0);
+//        initStep(deg90/10 + 1, 1);
+//        initStep(deg90/10 + 1, 2);
+//        initStep(deg90/10 + 1, 3);
+//      }
+      tm.minutes++;
       tm.seconds = 0;
+    }
+    if (tm.minutes >= 60) {
+      tm.hours++;
+    }
+    if (tm.hours >= 24) {
+      tm.hours == 0;
     }
     step();
     HAL_Delay(1);
