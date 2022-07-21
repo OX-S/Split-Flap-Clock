@@ -39,22 +39,24 @@ typedef struct
   int minutes;
   int hours;
   
+  
 } time;
 typedef struct {
-  GPIO_TypeDef* GPIOx;
+  GPIO_TypeDef* gpiox;
   uint16_t GPIO_Pin;
-} GPIO_Pin_TypeDef;
+} MotorPinTypeDef;
 typedef struct {
-  GPIO_TypeDef* GPIOx;
-  uint16_t GPIO_Pin_1;
-  uint16_t GPIO_Pin_2;
-  uint16_t GPIO_Pin_3;
-  uint16_t GPIO_Pin_4;
+  GPIO_TypeDef* MotorPort;
+  uint16_t MotorPin1;
+  uint16_t MotorPin2;
+  uint16_t MotorPin3;
+  uint16_t MotorPin4;
   int move_flag;
   int steps_to_move;
   enum step curr_step;
-  GPIO_Pin_TypeDef HAL_Pin;
+  MotorPinTypeDef HAL_Port;
   GPIO_PinState last_pinstate;
+  int step_past_0;
 } Motor_TypeDef;
 
 /* USER CODE END PTD */
@@ -103,34 +105,34 @@ void step(void) {
        switch(Motors[i].curr_step) 
     {
       case ONE:
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_1, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_2, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_3, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_4, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin1, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin2, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin3, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin4, GPIO_PIN_RESET);
         Motors[i].curr_step = TWO;  
-        break;
-      
-      case TWO:
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_1, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_2, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_3, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_4, GPIO_PIN_RESET);
+        break;                      
+                                    
+      case TWO:                     
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin1, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin2, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin3, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin4, GPIO_PIN_RESET);
         Motors[i].curr_step = THREE;
-        break;
-      
-      case THREE:
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_1, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_2, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_3, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_4, GPIO_PIN_SET);
-        Motors[i].curr_step = FOUR;
-        break;
-      
-      case FOUR:
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_1, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_2, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_3, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(Motors[i].GPIOx, Motors[i].GPIO_Pin_4, GPIO_PIN_SET);
+        break;                      
+                                    
+      case THREE:                   
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin1, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin2, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin3, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin4, GPIO_PIN_SET);
+        Motors[i].curr_step = FOUR; 
+        break;                      
+                                    
+      case FOUR:                    
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin1, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin2, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin3, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin4, GPIO_PIN_SET);
         Motors[i].curr_step = ONE;
         Motors[i].steps_to_move--;
         if(Motors[i].steps_to_move <= 0) {
@@ -143,7 +145,13 @@ void step(void) {
   }
 }
 
-
+void checkPosition(int id) {
+  if (Motors[id].last_pinstate != HAL_GPIO_ReadPin(Motors[id].HAL_Port.gpiox, Motors[id].HAL_Port.GPIO_Pin)) {
+      Motors[id].last_pinstate = HAL_GPIO_ReadPin(Motors[id].HAL_Port.gpiox, Motors[id].HAL_Port.GPIO_Pin);
+      initStep(deg90, id);
+  } 
+  
+}
 
 
 /* USER CODE END 0 */
@@ -159,53 +167,6 @@ int main(void)
   tm.seconds = 0;
   tm.minutes = 0;
   tm.hours = 0;
-  Motors[Minute_Ones].GPIOx = GPIOB;
-  Motors[Minute_Ones].GPIO_Pin_1 = IN1_1_Pin;
-  Motors[Minute_Ones].GPIO_Pin_2 = IN2_1_Pin;
-  Motors[Minute_Ones].GPIO_Pin_3 = IN3_1_Pin;
-  Motors[Minute_Ones].GPIO_Pin_4 = IN4_1_Pin;
-  Motors[Minute_Ones].move_flag = 0;
-  Motors[Minute_Ones].steps_to_move = 0;
-  Motors[Minute_Ones].curr_step = ONE;
-  Motors[Minute_Ones].HAL_Pin.GPIOx = GPIOB;
-  Motors[Minute_Ones].HAL_Pin.GPIO_Pin = MAG1_Pin;
-  Motors[Minute_Ones].last_pinstate = HAL_GPIO_ReadPin(Motors[Minute_Ones].HAL_Pin.GPIOx, Motors[Minute_Ones].HAL_Pin.GPIO_Pin);
-  
-  Motors[Minute_Tens].GPIOx = GPIOB;
-  Motors[Minute_Tens].GPIO_Pin_1 = IN1_2_Pin;
-  Motors[Minute_Tens].GPIO_Pin_2 = IN2_2_Pin;
-  Motors[Minute_Tens].GPIO_Pin_3 = IN3_2_Pin;
-  Motors[Minute_Tens].GPIO_Pin_4 = IN4_2_Pin;
-  Motors[Minute_Tens].move_flag = 0;
-  Motors[Minute_Tens].steps_to_move = 0;
-  Motors[Minute_Tens].curr_step = ONE;
-  Motors[Minute_Tens].HAL_Pin.GPIOx = GPIOC;
-  Motors[Minute_Tens].HAL_Pin.GPIO_Pin = MAG2_Pin;
-  Motors[Minute_Tens].last_pinstate = HAL_GPIO_ReadPin(Motors[Minute_Tens].HAL_Pin.GPIOx, Motors[Minute_Tens].HAL_Pin.GPIO_Pin);
-  
-  Motors[Hour_Ones].GPIOx = GPIOA;
-  Motors[Hour_Ones].GPIO_Pin_1 = IN1_3_Pin;
-  Motors[Hour_Ones].GPIO_Pin_2 = IN2_3_Pin;
-  Motors[Hour_Ones].GPIO_Pin_3 = IN3_3_Pin;
-  Motors[Hour_Ones].GPIO_Pin_4 = IN4_3_Pin;
-  Motors[Hour_Ones].move_flag = 0;
-  Motors[Hour_Ones].steps_to_move = 0;
-  Motors[Hour_Ones].curr_step = ONE;
-  Motors[Hour_Ones].HAL_Pin.GPIOx = GPIOA;
-  Motors[Hour_Ones].HAL_Pin.GPIO_Pin = MAG3_Pin;
-  Motors[Hour_Ones].last_pinstate = HAL_GPIO_ReadPin(Motors[Hour_Ones].HAL_Pin.GPIOx, Motors[Hour_Ones].HAL_Pin.GPIO_Pin);
-  
-  Motors[Hour_Tens].GPIOx = GPIOA;
-  Motors[Hour_Tens].GPIO_Pin_1 = IN1_4_Pin;
-  Motors[Hour_Tens].GPIO_Pin_2 = IN2_4_Pin;
-  Motors[Hour_Tens].GPIO_Pin_3 = IN3_4_Pin;
-  Motors[Hour_Tens].GPIO_Pin_4 = IN4_4_Pin;
-  Motors[Hour_Tens].move_flag = 0;    
-  Motors[Hour_Tens].steps_to_move = 0;
-  Motors[Hour_Tens].curr_step = ONE;
-  Motors[Hour_Tens].HAL_Pin.GPIOx = GPIOA;
-  Motors[Hour_Tens].HAL_Pin.GPIO_Pin = MAG4_Pin;
-  Motors[Hour_Tens].last_pinstate = HAL_GPIO_ReadPin(Motors[Hour_Tens].HAL_Pin.GPIOx, Motors[Hour_Tens].HAL_Pin.GPIO_Pin);
   
   
   /* USER CODE END 1 */
@@ -230,17 +191,85 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-  initStep(deg90/10 + 1, 0);
-  initStep(deg90/10 + 1, 1);
-  initStep(deg90/10 + 1, 2);
-  initStep(deg90/10 + 1, 3);
+  
+    Motors[Minute_Ones].MotorPort = GPIOB;
+  Motors[Minute_Ones].MotorPin1 = IN1_1_Pin;
+  Motors[Minute_Ones].MotorPin2 = IN2_1_Pin;
+  Motors[Minute_Ones].MotorPin3 = IN3_1_Pin;
+  Motors[Minute_Ones].MotorPin4 = IN4_1_Pin;
+  Motors[Minute_Ones].move_flag = 0;
+  Motors[Minute_Ones].steps_to_move = 0;
+  Motors[Minute_Ones].curr_step = ONE;
+  Motors[Minute_Ones].HAL_Port.gpiox = GPIOC;
+  Motors[Minute_Ones].HAL_Port.GPIO_Pin = MAG1_Pin;
+  Motors[Minute_Ones].last_pinstate = HAL_GPIO_ReadPin(Motors[Minute_Ones].HAL_Port.gpiox, Motors[Minute_Ones].HAL_Port.GPIO_Pin);
+  Motors[Minute_Ones].step_past_0 = 0;
+  
+  Motors[Minute_Tens].MotorPort = GPIOB;
+  Motors[Minute_Tens].MotorPin1 = IN1_2_Pin;
+  Motors[Minute_Tens].MotorPin2 = IN2_2_Pin;
+  Motors[Minute_Tens].MotorPin3 = IN3_2_Pin;
+  Motors[Minute_Tens].MotorPin4 = IN4_2_Pin;
+  Motors[Minute_Tens].move_flag = 0;
+  Motors[Minute_Tens].steps_to_move = 0;
+  Motors[Minute_Tens].curr_step = ONE;
+  Motors[Minute_Tens].HAL_Port.gpiox = GPIOC;
+  Motors[Minute_Tens].HAL_Port.GPIO_Pin = MAG2_Pin;
+  Motors[Minute_Tens].last_pinstate = HAL_GPIO_ReadPin(Motors[Minute_Tens].HAL_Port.gpiox, Motors[Minute_Tens].HAL_Port.GPIO_Pin);
+  Motors[Minute_Tens].step_past_0 = 0;
+    
+    
+  Motors[Hour_Ones].MotorPort = GPIOA;
+  Motors[Hour_Ones].MotorPin1 = IN1_3_Pin;
+  Motors[Hour_Ones].MotorPin2 = IN2_3_Pin;
+  Motors[Hour_Ones].MotorPin3 = IN3_3_Pin;
+  Motors[Hour_Ones].MotorPin4 = IN4_3_Pin;
+  Motors[Hour_Ones].move_flag = 0;
+  Motors[Hour_Ones].steps_to_move = 0;
+  Motors[Hour_Ones].curr_step = ONE;
+  Motors[Hour_Ones].HAL_Port.gpiox = GPIOC;
+  Motors[Hour_Ones].HAL_Port.GPIO_Pin = MAG3_Pin;
+  Motors[Hour_Ones].last_pinstate = HAL_GPIO_ReadPin(Motors[Hour_Ones].HAL_Port.gpiox, Motors[Hour_Ones].HAL_Port.GPIO_Pin);
+  Motors[Hour_Ones].step_past_0 = 0;
+  
+  Motors[Hour_Tens].MotorPort = GPIOA;
+  Motors[Hour_Tens].MotorPin1 = IN1_4_Pin;
+  Motors[Hour_Tens].MotorPin2 = IN2_4_Pin;
+  Motors[Hour_Tens].MotorPin3 = IN3_4_Pin;
+  Motors[Hour_Tens].MotorPin4 = IN4_4_Pin;
+  Motors[Hour_Tens].move_flag = 0;    
+  Motors[Hour_Tens].steps_to_move = 0;
+  Motors[Hour_Tens].curr_step = ONE;
+  Motors[Hour_Tens].HAL_Port.gpiox = GPIOC;
+  Motors[Hour_Tens].HAL_Port.GPIO_Pin = MAG4_Pin;
+  Motors[Hour_Tens].last_pinstate = HAL_GPIO_ReadPin(Motors[Hour_Tens].HAL_Port.gpiox, Motors[Hour_Tens].HAL_Port.GPIO_Pin);
+  Motors[Hour_Tens].step_past_0 = 0;
+//        initStep(deg90 + 1, 0);
+//      initStep(deg90 + 1, 1);
+//      initStep(deg90 + 1, 2);
+//      initStep(deg90 + 1, 3);  
+  
+  for (uint8_t i = 0; i < 4; i++) {
+    while (Motors[i].last_pinstate == HAL_GPIO_ReadPin(Motors[i].HAL_Port.gpiox, Motors[i].HAL_Port.GPIO_Pin)) {
+      initStep(4, i);
+      step();
+      HAL_Delay(1);
+      step();
+      HAL_Delay(1);
+      step();
+      HAL_Delay(1);
+      step();
+      HAL_Delay(1);
+    }
+    Motors[i].last_pinstate = HAL_GPIO_ReadPin(Motors[i].HAL_Port.gpiox, Motors[i].HAL_Port.GPIO_Pin);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  lastPosition1 = HAL_GPIO_ReadPin(GPIOC, MAG1_Pin);
   while (1)
   {
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -248,28 +277,37 @@ int main(void)
       tm.seconds++;
       milliseconds = 0;
     }
-    if (tm.seconds >= 60) {
+    if (tm.seconds >= 5) {
 //      if (flag != 1) {
-//        initStep(deg90/10 + 1, 0);
-//        initStep(deg90/10 + 1, 1);
-//        initStep(deg90/10 + 1, 2);
-//        initStep(deg90/10 + 1, 3);
+        initStep(deg90/10 + 1, 0);
+        initStep(deg90/10 + 1, 1);
+        initStep(deg90/10 + 1, 2);
+        initStep(deg90/10 + 1, 3);
 //      }
       tm.minutes++;
       tm.seconds = 0;
     }
-    if (tm.minutes >= 60) {
-      tm.hours++;
+    if (tm.seconds == 59) {
+     
+      tm.minutes++;
+      tm.seconds = 0;
     }
-    if (tm.hours >= 24) {
+    if (tm.minutes == 59) {
+      tm.hours++;
+      tm.minutes = 0;
+      tm.seconds = 0;
+    }
+    if (tm.hours == 23) {
       tm.hours = 0;
+      tm.minutes = 0;
+      tm.seconds = 0;
+    }
+    
+    HAL_Delay(1);
+    for (uint8_t j = 0; j < 4; j++) {
+      checkPosition(j);
     }
     step();
-    HAL_Delay(1);
-//    if(lastPosition1 != HAL_GPIO_ReadPin(GPIOC, MAG1_Pin)) {
-//      initStep(deg90*3);
-//      lastPosition1 = HAL_GPIO_ReadPin(GPIOC, MAG1_Pin);
-//    }
   }
   /* USER CODE END 3 */
 }
@@ -364,6 +402,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, NCS_MEMS_SPI_Pin|LD3_Pin|LD6_Pin|LD4_Pin
@@ -393,8 +432,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MAG2_Pin MAG1_Pin MAG3_Pin MAG4_Pin */
-  GPIO_InitStruct.Pin = MAG2_Pin|MAG1_Pin|MAG3_Pin|MAG4_Pin;
+  /*Configure GPIO pins : MAG2_Pin MAG1C10_Pin MAG2C11_Pin MAG3_Pin */
+  GPIO_InitStruct.Pin = MAG2_Pin|MAG1C10_Pin|MAG2C11_Pin|MAG3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -410,14 +449,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA2 PA3 PA6 PA7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_6|GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF3_TSC;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pins : IN1_1_Pin IN2_1_Pin IN3_1_Pin IN4_1_Pin
                            IN1_2_Pin IN2_2_Pin IN3_2_Pin IN4_2_Pin */
   GPIO_InitStruct.Pin = IN1_1_Pin|IN2_1_Pin|IN3_1_Pin|IN4_1_Pin
@@ -426,6 +457,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : MAG1_Pin MAG2B11_Pin */
+  GPIO_InitStruct.Pin = MAG1_Pin|MAG2B11_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : MAG4_Pin */
+  GPIO_InitStruct.Pin = MAG4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(MAG4_GPIO_Port, &GPIO_InitStruct);
 
 }
 
