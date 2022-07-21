@@ -240,7 +240,7 @@ int main(void)
   Motors[Hour_Tens].move_flag = 0;    
   Motors[Hour_Tens].steps_to_move = 0;
   Motors[Hour_Tens].curr_step = ONE;
-  Motors[Hour_Tens].HAL_Port.gpiox = GPIOC;
+  Motors[Hour_Tens].HAL_Port.gpiox = GPIOD;
   Motors[Hour_Tens].HAL_Port.GPIO_Pin = MAG4_Pin;
   Motors[Hour_Tens].last_pinstate = HAL_GPIO_ReadPin(Motors[Hour_Tens].HAL_Port.gpiox, Motors[Hour_Tens].HAL_Port.GPIO_Pin);
   Motors[Hour_Tens].step_past_0 = 0;
@@ -410,8 +410,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, IN1_3_Pin|IN2_3_Pin|IN1_4_Pin|IN2_4_Pin
-                          |IN3_3_Pin|IN4_3_Pin|IN3_4_Pin|IN4_4_Pin
-                          |GPIO_PIN_12, GPIO_PIN_RESET);
+                          |IN3_3_Pin|IN4_3_Pin|IN3_4_Pin|IN4_4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, IN1_1_Pin|IN2_1_Pin|IN3_1_Pin|IN4_1_Pin
@@ -432,18 +431,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MAG2_Pin MAG1C10_Pin MAG2C11_Pin MAG3_Pin */
-  GPIO_InitStruct.Pin = MAG2_Pin|MAG1C10_Pin|MAG2C11_Pin|MAG3_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
   /*Configure GPIO pins : IN1_3_Pin IN2_3_Pin IN1_4_Pin IN2_4_Pin
-                           IN3_3_Pin IN4_3_Pin IN3_4_Pin IN4_4_Pin
-                           PA12 */
+                           IN3_3_Pin IN4_3_Pin IN3_4_Pin IN4_4_Pin */
   GPIO_InitStruct.Pin = IN1_3_Pin|IN2_3_Pin|IN1_4_Pin|IN2_4_Pin
-                          |IN3_3_Pin|IN4_3_Pin|IN3_4_Pin|IN4_4_Pin
-                          |GPIO_PIN_12;
+                          |IN3_3_Pin|IN4_3_Pin|IN3_4_Pin|IN4_4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -458,11 +449,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MAG1_Pin MAG2B11_Pin */
-  GPIO_InitStruct.Pin = MAG1_Pin|MAG2B11_Pin;
+  /*Configure GPIO pins : MAG1_Pin MAG2_Pin MAG3_Pin */
+  GPIO_InitStruct.Pin = MAG1_Pin|MAG2_Pin|MAG3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MAG4_Pin */
   GPIO_InitStruct.Pin = MAG4_Pin;

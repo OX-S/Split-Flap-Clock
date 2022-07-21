@@ -64,8 +64,6 @@ void Error_Handler(void);
 #define MEMS_INT1_GPIO_Port GPIOC
 #define MEMS_INT2_Pin GPIO_PIN_2
 #define MEMS_INT2_GPIO_Port GPIOC
-#define MAG2_Pin GPIO_PIN_11
-#define MAG2_GPIO_Port GPIOC
 #define IN1_3_Pin GPIO_PIN_0
 #define IN1_3_GPIO_Port GPIOA
 #define IN2_3_Pin GPIO_PIN_1
@@ -76,10 +74,6 @@ void Error_Handler(void);
 #define IN2_4_GPIO_Port GPIOA
 #define IN1_1_Pin GPIO_PIN_2
 #define IN1_1_GPIO_Port GPIOB
-#define MAG1_Pin GPIO_PIN_10
-#define MAG1_GPIO_Port GPIOB
-#define MAG2B11_Pin GPIO_PIN_11
-#define MAG2B11_GPIO_Port GPIOB
 #define SPI2_SCK_Pin GPIO_PIN_13
 #define SPI2_SCK_GPIO_Port GPIOB
 #define SPI2_MISO_Pin GPIO_PIN_14
@@ -100,12 +94,12 @@ void Error_Handler(void);
 #define IN4_3_GPIO_Port GPIOA
 #define IN3_4_Pin GPIO_PIN_10
 #define IN3_4_GPIO_Port GPIOA
-#define IN4_4_Pin GPIO_PIN_11
+#define IN4_4_Pin GPIO_PIN_15
 #define IN4_4_GPIO_Port GPIOA
-#define MAG1C10_Pin GPIO_PIN_10
-#define MAG1C10_GPIO_Port GPIOC
-#define MAG2C11_Pin GPIO_PIN_11
-#define MAG2C11_GPIO_Port GPIOC
+#define MAG1_Pin GPIO_PIN_10
+#define MAG1_GPIO_Port GPIOC
+#define MAG2_Pin GPIO_PIN_11
+#define MAG2_GPIO_Port GPIOC
 #define MAG3_Pin GPIO_PIN_12
 #define MAG3_GPIO_Port GPIOC
 #define MAG4_Pin GPIO_PIN_2
