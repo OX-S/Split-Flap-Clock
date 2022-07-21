@@ -64,6 +64,8 @@ void Error_Handler(void);
 #define MEMS_INT1_GPIO_Port GPIOC
 #define MEMS_INT2_Pin GPIO_PIN_2
 #define MEMS_INT2_GPIO_Port GPIOC
+#define MAG2_Pin GPIO_PIN_3
+#define MAG2_GPIO_Port GPIOC
 #define IN1_3_Pin GPIO_PIN_0
 #define IN1_3_GPIO_Port GPIOA
 #define IN2_3_Pin GPIO_PIN_1
@@ -98,6 +100,10 @@ void Error_Handler(void);
 #define IN3_4_GPIO_Port GPIOA
 #define IN4_4_Pin GPIO_PIN_11
 #define IN4_4_GPIO_Port GPIOA
+#define MAG3_Pin GPIO_PIN_10
+#define MAG3_GPIO_Port GPIOC
+#define MAG4_Pin GPIO_PIN_11
+#define MAG4_GPIO_Port GPIOC
 #define IN2_1_Pin GPIO_PIN_3
 #define IN2_1_GPIO_Port GPIOB
 #define IN3_1_Pin GPIO_PIN_4
