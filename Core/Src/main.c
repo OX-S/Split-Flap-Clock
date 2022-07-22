@@ -57,6 +57,8 @@ typedef struct {
   MotorPinTypeDef HAL_Port;
   GPIO_PinState last_pinstate;
   int step_past_0;
+  int past_magnet;
+  int steps_past_magnet;
 } Motor_TypeDef;
 
 /* USER CODE END PTD */
@@ -88,6 +90,8 @@ GPIO_PinState lastPosition1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI2_Init(void);
+void resetToZero(int i);
+void step(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -97,6 +101,23 @@ static void MX_SPI2_Init(void);
 void initStep(int steps, int id) {
   Motors[id].steps_to_move = steps;
   Motors[id].move_flag = 1;
+}
+
+void resetToZero(int i) {
+  while (Motors[i].last_pinstate == HAL_GPIO_ReadPin(Motors[i].HAL_Port.gpiox, Motors[i].HAL_Port.GPIO_Pin)) {
+      initStep(4, i);
+      step();
+      HAL_Delay(1);
+      step();
+      HAL_Delay(1);
+      step();
+      HAL_Delay(1);
+      step();
+      HAL_Delay(1);
+    }
+    Motors[i].last_pinstate = HAL_GPIO_ReadPin(Motors[i].HAL_Port.gpiox, Motors[i].HAL_Port.GPIO_Pin);
+    Motors[i].past_magnet = 1;
+    Motors[i].steps_past_magnet = 0;
 }
 
 void step(void) {
@@ -135,6 +156,13 @@ void step(void) {
         HAL_GPIO_WritePin(Motors[i].MotorPort, Motors[i].MotorPin4, GPIO_PIN_SET);
         Motors[i].curr_step = ONE;
         Motors[i].steps_to_move--;
+        if (Motors[i].past_magnet == 1) {
+          Motors[i].steps_past_magnet++;
+        }
+        if (Motors[i].steps_past_magnet >= deg90 && Motors[i].steps_to_move <= 0) {
+          Motors[i].last_pinstate = HAL_GPIO_ReadPin(Motors[i].HAL_Port.gpiox, Motors[i].HAL_Port.GPIO_Pin);
+          resetToZero(i);
+        }
         if(Motors[i].steps_to_move <= 0) {
           Motors[i].move_flag = 0;
         }
@@ -146,6 +174,10 @@ void step(void) {
 }
 
 void checkPosition(int id) {
+  if (Motors[id].past_magnet == 1) {
+    return;
+  }
+  
   if (Motors[id].last_pinstate != HAL_GPIO_ReadPin(Motors[id].HAL_Port.gpiox, Motors[id].HAL_Port.GPIO_Pin)) {
       Motors[id].last_pinstate = HAL_GPIO_ReadPin(Motors[id].HAL_Port.gpiox, Motors[id].HAL_Port.GPIO_Pin);
       initStep(deg90, id);
@@ -250,18 +282,7 @@ int main(void)
 //      initStep(deg90 + 1, 3);  
   
   for (uint8_t i = 0; i < 4; i++) {
-    while (Motors[i].last_pinstate == HAL_GPIO_ReadPin(Motors[i].HAL_Port.gpiox, Motors[i].HAL_Port.GPIO_Pin)) {
-      initStep(4, i);
-      step();
-      HAL_Delay(1);
-      step();
-      HAL_Delay(1);
-      step();
-      HAL_Delay(1);
-      step();
-      HAL_Delay(1);
-    }
-    Motors[i].last_pinstate = HAL_GPIO_ReadPin(Motors[i].HAL_Port.gpiox, Motors[i].HAL_Port.GPIO_Pin);
+    resetToZero(i);
   }
   /* USER CODE END 2 */
 
@@ -278,11 +299,25 @@ int main(void)
       milliseconds = 0;
     }
     if (tm.seconds >= 5) {
-//      if (flag != 1) {
+
+      if (Motors[0].steps_to_move == 0) {
         initStep(deg90/10 + 1, 0);
+      }
+      if (Motors[1].steps_to_move == 0) {
         initStep(deg90/10 + 1, 1);
+      }
+      if (Motors[2].steps_to_move == 0) {
         initStep(deg90/10 + 1, 2);
+      }
+      if (Motors[3].steps_to_move == 0) {
         initStep(deg90/10 + 1, 3);
+      }
+      
+//      if (flag != 1) {
+//        
+//        initStep(deg90/10 + 1, 1);
+//        initStep(deg90/10 + 1, 2);
+//        initStep(deg90/10 + 1, 3);
 //      }
       tm.minutes++;
       tm.seconds = 0;
@@ -304,6 +339,7 @@ int main(void)
     }
     
     HAL_Delay(1);
+    
     for (uint8_t j = 0; j < 4; j++) {
       checkPosition(j);
     }

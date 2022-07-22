@@ -144,7 +144,7 @@
             <outputs>
                 <tool>
                     <name>ILINK</name>
-                    <file> 47 132</file>
+                    <file> 132 47</file>
                 </tool>
             </outputs>
         </file>
